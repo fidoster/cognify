@@ -11,33 +11,46 @@ class AIService {
     if (apiKey) {
       this.client = new Anthropic({
         apiKey: apiKey,
-        dangerouslyAllowBrowser: true // Note: In production, use a backend proxy
+        dangerouslyAllowBrowser: true
       });
     }
   }
 
-  async generateDecisionOptions(context, currentNode) {
+  async generateOptionsFromPrompt(userPrompt, context = []) {
     if (!this.client) {
       throw new Error('API key not set. Please configure your Anthropic API key.');
     }
 
-    const prompt = `You are a helpful decision-making assistant. Based on the following context, generate 2-4 relevant decision options or questions to help guide the user forward.
+    const contextString = context.length > 0
+      ? `\n\nPrevious context:\n${context.map((c, i) => `${i + 1}. ${c.prompt}: ${c.selectedOption || 'Starting point'}`).join('\n')}`
+      : '';
 
-Context: ${context}
-Current situation: ${currentNode}
+    const prompt = `You are an AI decision-making assistant. The user is on a decision journey and needs your help exploring options.
 
-Return ONLY a JSON array of options in this format:
+User's current question/problem: "${userPrompt}"${contextString}
+
+Generate 3-4 diverse, actionable options or directions they could explore next. Each option should be:
+- Clear and specific
+- Actionable and practical
+- Different from the others (explore various angles)
+- Help them progress in their decision-making
+
+Return ONLY a JSON array in this exact format:
 [
-  {"id": "option1", "text": "Option text", "description": "Brief description"},
-  {"id": "option2", "text": "Option text", "description": "Brief description"}
+  {
+    "id": "opt1",
+    "title": "Brief title (3-6 words)",
+    "description": "Detailed description explaining this path (15-25 words)",
+    "nextPrompt": "A suggested follow-up question if they choose this option"
+  }
 ]
 
-Make the options clear, actionable, and helpful for decision-making.`;
+Make it insightful and helpful!`;
 
     try {
       const message = await this.client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [{
           role: 'user',
           content: prompt
@@ -58,15 +71,16 @@ Make the options clear, actionable, and helpful for decision-making.`;
     }
   }
 
-  async getInsight(decisionPath, currentContext) {
+  async generateInsightForNode(userPrompt, selectedOption, fullContext) {
     if (!this.client) {
       return null;
     }
 
-    const prompt = `Based on this decision path: ${decisionPath.join(' → ')}
-Current context: ${currentContext}
+    const prompt = `Based on this decision journey:
+Question: "${userPrompt}"
+Chosen direction: "${selectedOption}"
 
-Provide a brief, helpful insight or recommendation (2-3 sentences maximum) to guide the user's decision.`;
+Provide a brief, encouraging insight (2-3 sentences) about this choice and what to consider next.`;
 
     try {
       const message = await this.client.messages.create({
@@ -85,30 +99,86 @@ Provide a brief, helpful insight or recommendation (2-3 sentences maximum) to gu
     }
   }
 
-  async analyzeDecisionPath(path) {
+  async generateJourneySummary(nodes) {
     if (!this.client) {
-      return 'Complete your decision path to receive AI insights.';
+      return {
+        summary: 'Complete your API setup to receive AI-powered journey analysis.',
+        keyInsights: [],
+        recommendations: []
+      };
     }
 
-    const prompt = `Analyze this decision path and provide a brief summary (2-3 sentences):
-${path.map((step, i) => `${i + 1}. ${step}`).join('\n')}
+    const journeyPath = nodes.map((node, i) =>
+      `Step ${i + 1}: ${node.prompt}${node.selectedOption ? ` → Chose: ${node.selectedOption.title}` : ''}`
+    ).join('\n');
 
-Provide constructive feedback and next steps.`;
+    const prompt = `Analyze this decision-making journey and provide insights:
+
+${journeyPath}
+
+Provide a response in this JSON format:
+{
+  "summary": "A 2-3 sentence summary of their decision journey and what they accomplished",
+  "keyInsights": ["insight 1", "insight 2", "insight 3"],
+  "recommendations": ["specific action 1", "specific action 2", "specific action 3"]
+}
+
+Make it actionable, insightful, and encouraging.`;
 
     try {
       const message = await this.client.messages.create({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 512,
+        max_tokens: 1024,
         messages: [{
           role: 'user',
           content: prompt
         }]
       });
 
-      return message.content[0].text;
+      const responseText = message.content[0].text;
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+
+      throw new Error('Failed to parse summary');
     } catch (error) {
-      console.error('AI Analysis Error:', error);
-      return 'Unable to analyze decision path at this time.';
+      console.error('Summary Error:', error);
+      return {
+        summary: 'Your decision journey explored multiple paths and considerations.',
+        keyInsights: ['Each choice revealed new perspectives', 'The journey helped clarify priorities'],
+        recommendations: ['Review your path', 'Consider next steps', 'Take action on insights']
+      };
+    }
+  }
+
+  async improvePrompt(userInput) {
+    if (!this.client || !userInput.trim()) {
+      return null;
+    }
+
+    const prompt = `The user entered: "${userInput}"
+
+If this is vague or could be clearer, suggest a more specific, actionable version (one sentence, 10-20 words). If it's already clear, return null.
+
+Return ONLY the improved prompt text or the word "null".`;
+
+    try {
+      const message = await this.client.messages.create({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 128,
+        messages: [{
+          role: 'user',
+          content: prompt
+        }]
+      });
+
+      const result = message.content[0].text.trim();
+      return result.toLowerCase() === 'null' ? null : result;
+    } catch (error) {
+      console.error('Prompt improvement error:', error);
+      return null;
     }
   }
 }
