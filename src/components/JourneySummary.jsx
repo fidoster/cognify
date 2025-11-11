@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, Lightbulb, Target, RefreshCw, Download, Loader2 } from 'lucide-react';
 import { aiService } from '../services/aiService';
+import { generateDemoSummary } from '../data/demoData';
 
-export default function JourneySummary({ nodes, onStartNew }) {
+export default function JourneySummary({ nodes, onStartNew, aiEnabled = true }) {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,7 +15,17 @@ export default function JourneySummary({ nodes, onStartNew }) {
   const generateSummary = async () => {
     setLoading(true);
     try {
-      const result = await aiService.generateJourneySummary(nodes);
+      let result;
+
+      if (!aiEnabled) {
+        // Demo mode - use creative pre-generated summary
+        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate thinking
+        result = generateDemoSummary(nodes);
+      } else {
+        // AI mode - generate personalized summary
+        result = await aiService.generateJourneySummary(nodes);
+      }
+
       setSummary(result);
     } catch (error) {
       console.error('Failed to generate summary:', error);

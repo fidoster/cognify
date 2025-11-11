@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Home as HomeIcon, Settings } from 'lucide-react';
+import { Flag, Home as HomeIcon, Settings, Sparkles } from 'lucide-react';
 import DecisionNode from './DecisionNode';
 import PromptInput from './PromptInput';
 import JourneySummary from './JourneySummary';
 import { aiService } from '../services/aiService';
+import { getDemoOptions, getRandomEncouragement } from '../data/demoData';
 
 export default function NodeJourney({ onGoHome, onOpenSettings, aiEnabled }) {
   const [nodes, setNodes] = useState([]);
@@ -13,11 +14,6 @@ export default function NodeJourney({ onGoHome, onOpenSettings, aiEnabled }) {
   const [error, setError] = useState(null);
 
   const addNode = async (prompt) => {
-    if (!aiEnabled) {
-      setError('Please configure your API key in settings to use AI features.');
-      return;
-    }
-
     setError(null);
     const nodeId = `node-${Date.now()}`;
     const newNode = {
@@ -32,12 +28,20 @@ export default function NodeJourney({ onGoHome, onOpenSettings, aiEnabled }) {
     setIsGenerating(true);
 
     try {
-      const context = nodes.map(n => ({
-        prompt: n.prompt,
-        selectedOption: n.selectedOption?.title
-      }));
+      let options;
 
-      const options = await aiService.generateOptionsFromPrompt(prompt, context);
+      if (!aiEnabled) {
+        // Demo mode - use creative pre-built scenarios
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate thinking
+        options = getDemoOptions(prompt);
+      } else {
+        // AI mode - generate options
+        const context = nodes.map(n => ({
+          prompt: n.prompt,
+          selectedOption: n.selectedOption?.title
+        }));
+        options = await aiService.generateOptionsFromPrompt(prompt, context);
+      }
 
       setNodes(prev => prev.map(n =>
         n.id === nodeId ? { ...n, options } : n
@@ -132,6 +136,7 @@ export default function NodeJourney({ onGoHome, onOpenSettings, aiEnabled }) {
               key="summary"
               nodes={nodes}
               onStartNew={startNewJourney}
+              aiEnabled={aiEnabled}
             />
           ) : (
             <motion.div

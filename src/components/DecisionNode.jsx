@@ -81,20 +81,21 @@ export default function DecisionNode({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => onSelectOption(node.id, option)}
-                  className="w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all group"
-                  whileHover={{ scale: 1.02 }}
+                  className="w-full text-left p-5 rounded-xl border-2 border-gray-200 hover:border-indigo-500 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all group shadow-sm hover:shadow-md"
+                  whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900 group-hover:text-indigo-700 mb-1">
-                        {option.title}
+                      <div className="font-bold text-lg text-gray-900 group-hover:text-indigo-700 mb-2 flex items-center gap-2">
+                        {option.emoji && <span className="text-2xl">{option.emoji}</span>}
+                        <span>{option.title.replace(/^[^\w\s]+\s*/, '')}</span>
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 leading-relaxed">
                         {option.description}
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors flex-shrink-0" />
+                    <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
                   </div>
                 </motion.button>
               ))}

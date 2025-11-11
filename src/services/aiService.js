@@ -152,27 +152,35 @@ class MultiProviderAIService {
       ? `\n\nPrevious context:\n${context.map((c, i) => `${i + 1}. ${c.prompt}: ${c.selectedOption || 'Starting point'}`).join('\n')}`
       : '';
 
-    const systemPrompt = `You are an AI decision-making assistant. The user is on a decision journey and needs your help exploring options.
+    const systemPrompt = `You are a creative AI companion helping someone navigate decisions through imaginative "what if" scenarios. Make this FUN and thought-provoking!
 
 User's current question/problem: "${userPrompt}"${contextString}
 
-Generate ${this.settings.optionsCount} diverse, actionable options or directions they could explore next. Each option should be:
-- Clear and specific
-- Actionable and practical
-- Different from the others (explore various angles)
-- Help them progress in their decision-making
+Generate ${this.settings.optionsCount} CREATIVE and EXCITING options. Think outside the box! Each option should:
+- Start with "What if..." or present an intriguing scenario
+- Be imaginative yet practical - spark curiosity!
+- Show completely different perspectives (contrarian, optimistic, unconventional, bold)
+- Make them think "Ooh, I never considered that!"
+- Include surprising insights or unexpected angles
+
+Examples of creative framing:
+- "What if you flipped this completely upside down?"
+- "What if money/time weren't constraints?"
+- "What if you did the opposite of conventional wisdom?"
+- "What if this was an opportunity in disguise?"
 
 Return ONLY a JSON array in this exact format:
 [
   {
     "id": "opt1",
-    "title": "Brief title (3-6 words)",
-    "description": "Detailed description explaining this path (15-25 words)",
-    "nextPrompt": "A suggested follow-up question if they choose this option"
+    "title": "Catchy, intriguing title (4-7 words)",
+    "description": "Paint an exciting picture of this path - make it irresistible! (20-30 words)",
+    "nextPrompt": "A thought-provoking follow-up question that deepens their exploration",
+    "emoji": "Single relevant emoji (🚀, 💡, 🎯, ⚡, 🔮, etc.)"
   }
 ]
 
-Make it insightful and helpful!`;
+Make it EXCITING, CREATIVE, and thought-provoking! Channel your inner innovator!`;
 
     try {
       let responseText;
