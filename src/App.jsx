@@ -6,8 +6,7 @@ import AdminPanel from './components/AdminPanel';
 import { aiService } from './services/aiService';
 
 function App() {
-  const [showJourney, setShowJourney] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'journey', 'admin'
   const [aiEnabled, setAiEnabled] = useState(false);
 
   useEffect(() => {
@@ -24,16 +23,16 @@ function App() {
   };
 
   const handleAdminClose = () => {
-    setShowAdmin(false);
+    setCurrentView('home');
     checkAIStatus(); // Recheck status after closing admin
   };
 
   return (
     <div className="relative">
       {/* Settings Button - Only show on home */}
-      {!showJourney && (
+      {currentView === 'home' && (
         <button
-          onClick={() => setShowAdmin(true)}
+          onClick={() => setCurrentView('admin')}
           className="fixed top-4 right-4 z-40 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all border-2 border-gray-200 hover:border-indigo-500"
           title="Admin Panel"
         >
@@ -41,22 +40,23 @@ function App() {
         </button>
       )}
 
-      {/* Main Content */}
-      {showJourney ? (
-        <NodeJourney
-          onGoHome={() => setShowJourney(false)}
-          onOpenSettings={() => setShowAdmin(true)}
-          aiEnabled={aiEnabled}
-        />
-      ) : (
+      {/* Main Content - Show one view at a time */}
+      {currentView === 'home' && (
         <Home
-          onStartJourney={() => setShowJourney(true)}
+          onStartJourney={() => setCurrentView('journey')}
           aiEnabled={aiEnabled}
         />
       )}
 
-      {/* Admin Panel */}
-      {showAdmin && (
+      {currentView === 'journey' && (
+        <NodeJourney
+          onGoHome={() => setCurrentView('home')}
+          onOpenSettings={() => setCurrentView('admin')}
+          aiEnabled={aiEnabled}
+        />
+      )}
+
+      {currentView === 'admin' && (
         <AdminPanel
           onClose={handleAdminClose}
         />
