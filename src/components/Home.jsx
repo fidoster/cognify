@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Brain, Sparkles, Zap, Target, ArrowRight, Network } from 'lucide-react';
+import { aiService } from '../services/aiService';
 
 export default function Home({ onStartJourney, aiEnabled }) {
   const features = [
@@ -67,14 +68,25 @@ export default function Home({ onStartJourney, aiEnabled }) {
             AI helps you explore options, consider alternatives, and make better choices.
           </p>
 
-          {!aiEnabled && (
+          {!aiEnabled ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 max-w-md mx-auto mb-8"
             >
               <p className="text-yellow-800 font-medium">
-                ⚠️ Configure your API key in settings to enable AI features
+                ⚠️ Configure your API key in admin panel to enable AI features
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-3 max-w-md mx-auto mb-8"
+            >
+              <p className="text-green-800 font-medium flex items-center justify-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Powered by {aiService.getProviderName()}
               </p>
             </motion.div>
           )}
